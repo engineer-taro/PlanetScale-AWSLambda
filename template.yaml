@@ -1,0 +1,61 @@
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Runtime: python3.9
+    Timeout: 30
+    Handler: app.lambda_handler
+    MemorySize: 128
+    Environment:
+      Variables:
+        TABLE_NAME: data-table
+
+Description: >
+  PlanetScale Test develop
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+  
+Resources:
+  connectTestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: connectTest
+      CodeUri: connect-test/
+      Environment:
+        Variables:
+          ENV: !Ref Env
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub lambda-execution-role-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "lambda-secretmanager-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                    - "secretsmanager:GetResourcePolicy"
+                    - "secretsmanager:GetSecretValue"
+                    - "secretsmanager:DescribeSecret"
+                    - "secretsmanager:ListSecretVersionIds"
+                Resource: "*"
